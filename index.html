@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="용돈기입장">
+<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>용돈기입장</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 설정 마법사 · 설정하기 (setup.js) -->
+  <div id="setup" class="setup" hidden>
+    <header><h1 id="setupTitle"></h1><button class="icon-btn" id="setupClose" aria-label="닫기">✕</button></header>
+    <div id="setupTabs"></div>
+    <div id="setupBody"></div>
+    <div class="setup-actions actions"><button class="danger" id="setupPrev">이전</button><button class="primary" id="setupNext">다음</button></div>
+  </div>
+
+  <div id="app">
+  <header>
+    <h1 id="title">내 통장</h1>
+    <button class="icon-btn" id="menuBtn" aria-label="설정">⋯</button>
+  </header>
+
+  <!-- 홈 -->
+  <main id="tab-home">
+    <div class="twin">
+      <div class="card" id="savedCard">
+        <div class="label" id="leftLabel">지금까지 모은 돈</div>
+        <div class="big num" id="savedTotal"></div>
+        <div class="mini num" id="savedDetail"></div>
+      </div>
+      <div class="card" id="emergCard">
+        <div class="label">비상금</div>
+        <div class="big num" id="emergTotal"></div>
+        <div class="mini num" id="emergDetail"></div>
+      </div>
+    </div>
+
+    <div class="card living" id="living">
+      <div class="top"><span class="label" id="livingLabel"></span><span class="label" id="dday"></span></div>
+      <div class="big num" id="livingAmt"></div>
+      <div class="meter"><i id="livingBar"></i></div>
+    </div>
+
+    <div class="paydays">
+      <button class="payday" id="payBtn">💸 월급 입금!<small id="paySub"></small></button>
+      <button class="payday alt" id="splitBtn">🏦 생활비 입금!<small id="splitSub"></small></button>
+    </div>
+
+    <section>
+      <h2>통장 잔액 <small id="balTotal"></small></h2>
+      <div class="card acc-list" style="padding:4px 0" id="accList"></div>
+    </section>
+
+    <section>
+      <h2>최근 내역 <small><button id="moreBtn" class="sub">전체 보기 ›</button></small></h2>
+      <div id="recent"></div>
+    </section>
+  </main>
+
+  <!-- 내역 -->
+  <main id="tab-history" hidden>
+    <div class="month-nav">
+      <button class="icon-btn" id="prev">‹</button>
+      <h3 id="month" class="num"></h3>
+      <button class="icon-btn" id="next">›</button>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="card acc-bal" id="accBal" hidden>
+      <div><span class="label" id="accBalName"></span><b class="num" id="accBalAmt"></b></div>
+      <button class="chip" id="adjustBtn">실제 잔액으로 맞추기</button>
+    </div>
+    <div class="sums">
+      <div><span class="label">들어온 돈</span><b class="in-c num" id="sumIn"></b></div>
+      <div><span class="label">나간 돈</span><b class="out-c num" id="sumOut"></b></div>
+    </div>
+    <!-- 나간 돈을 설정에서 고른 통장별로 (최대 3칸) -->
+    <div class="sums three" id="sumsBy"></div>
+    <div id="history"></div>
+  </main>
+
+  <!-- 고정지출 (+ 적금이 있으면 아래에) -->
+  <main id="tab-fixed" hidden>
+    <div class="card fixed-sum">
+      <div class="label">매달 고정지출</div>
+      <div class="big num" id="fixedTotal"></div>
+      <div class="mini num" id="fixedDetail"></div>
+    </div>
+    <section>
+      <h2>날짜별 <small>누르면 고칠 수 있어요</small></h2>
+      <div id="fixedList"></div>
+      <button class="add" id="fixedAdd">+ 고정지출 추가</button>
+    </section>
+    <section id="savingSec" hidden>
+      <h2>적금</h2>
+      <div id="savingCards"></div>
+    </section>
+    <section id="forecastSec">
+      <h2>적금 끝날 때 예상 <small id="forecastWhen"></small></h2>
+      <div class="card" id="forecast"></div>
+    </section>
+    <section id="planSec" hidden>
+      <h2>적금 만기 후 계획</h2>
+      <div class="card"><ul class="memo-list" id="planList"></ul></div>
+    </section>
+  </main>
+
+  <button class="fab" id="addBtn" aria-label="기록 추가">+</button>
+  <nav>
+    <button data-tab="home" class="on"><span>🏠</span>홈</button>
+    <button data-tab="history"><span>🧾</span>내역</button>
+    <button data-tab="fixed"><span>📌</span>고정지출</button>
+  </nav>
+  </div>
+
+  <div class="dim" id="dim"></div>
+
+  <!-- 기록 입력 -->
+  <div class="sheet" id="formSheet">
+    <div class="grab"></div>
+    <div class="seg" id="signSeg">
+      <button data-sign="-1">나간 돈 (-)</button>
+      <button data-sign="1">들어온 돈 (+)</button>
+      <button data-sign="0">통장 이체</button>
+    </div>
+    <div class="amount-wrap">
+      <b id="signMark">-</b>
+      <input id="amount" class="amount-input num" inputmode="numeric" autocomplete="off" placeholder="0">
+      <span>원</span>
+    </div>
+    <div class="quick" id="quick">
+      <button data-add="1000">+1천</button><button data-add="5000">+5천</button>
+      <button data-add="10000">+1만</button><button data-add="50000">+5만</button><button data-add="0">지우기</button>
+    </div>
+    <label class="treat" id="giftRow"><input type="checkbox" id="gift"> 🎁 선물받은 기프티콘으로 샀어요</label>
+    <div id="accField">
+      <div class="field-label" id="accLabel">통장</div>
+      <div class="chips" id="accChips"></div>
+    </div>
+    <div id="toField" hidden>
+      <div class="field-label">받는 통장</div>
+      <div class="chips" id="toChips"></div>
+    </div>
+    <div id="fundField" hidden>
+      <div class="field-label">어느 비상금에서 썼나요?</div>
+      <div class="chips" id="fundChips"></div>
+    </div>
+    <div id="catField">
+      <div class="field-label">분류</div>
+      <div class="chips" id="catChips"></div>
+      <div class="field-label" id="subLabel" hidden>카테고리</div>
+      <div class="chips" id="subChips" hidden></div>
+      <div id="optField" hidden>
+        <div class="field-label" id="optLabel"></div>
+        <div class="chips" id="optChips"></div>
+      </div>
+      <input id="etcName" class="input" placeholder="분류 이름을 직접 써주세요" maxlength="12" style="margin-top:8px" hidden>
+    </div>
+    <div class="field-label">날짜</div>
+    <input type="date" id="date" class="input">
+    <div class="field-label">메모</div>
+    <input id="memo" class="input" placeholder="예) 친구랑 떡볶이" maxlength="40">
+    <div class="actions">
+      <button class="danger" id="delBtn">삭제</button>
+      <button class="primary" id="saveBtn">저장</button>
+    </div>
+  </div>
+
+  <!-- 월급날 -->
+  <div class="sheet" id="paySheet">
+    <div class="grab"></div>
+    <h3>💸 월급 입금!</h3>
+    <div class="grid2">
+      <div><label>받은 날</label><input type="date" id="payDate" class="input"></div>
+      <div><label>월급</label><input id="payAmount" class="input num" inputmode="numeric"></div>
+    </div>
+    <div class="field-label">보너스 (있을 때만)</div>
+    <input id="payBonus" class="input num" inputmode="numeric" placeholder="없으면 비워두세요">
+    <div id="bonusToField" hidden>
+      <div class="field-label">보너스를 넣을 통장</div>
+      <div class="chips" id="bonusToChips"></div>
+    </div>
+    <div class="split-list num" id="paySplit"></div>
+    <div class="actions"><button class="primary" id="payConfirm">이렇게 나눠 넣기</button></div>
+  </div>
+
+  <!-- 생활비 입금: 생활비 통장에 들어온 돈 기록 -->
+  <div class="sheet" id="splitSheet">
+    <div class="grab"></div>
+    <h3>🏦 생활비 입금!</h3>
+    <div class="label" id="splitFrom"></div>
+    <div class="field-label">들어온 날</div>
+    <input type="date" id="splitDate" class="input">
+    <div class="field-label">금액</div>
+    <input id="splitAmount" class="input num" inputmode="numeric" placeholder="0">
+    <div class="split-list num" id="splitSum"></div>
+    <div class="actions"><button class="primary" id="splitConfirm">입금 기록하기</button></div>
+  </div>
+
+  <!-- 고정지출 추가·수정 -->
+  <div class="sheet" id="fixedSheet">
+    <div class="grab"></div>
+    <h3 id="fixedTitle"></h3>
+    <div class="grid2">
+      <div><label>이름</label><input id="fxName" class="input" placeholder="예: 휴대폰 요금" maxlength="20"></div>
+      <div><label>매달 며칠</label><input id="fxDay" class="input num" inputmode="numeric" placeholder="25"></div>
+    </div>
+    <div class="field-label">금액</div>
+    <input id="fxAmount" class="input num" inputmode="numeric" placeholder="0">
+    <div class="field-label">나가는 통장</div>
+    <div class="chips" id="fxAccChips"></div>
+    <div class="field-label">분류</div>
+    <div class="chips" id="fxCatChips"></div>
+    <div class="field-label">메모</div>
+    <input id="fxMemo" class="input" placeholder="예: 운전자보험" maxlength="30">
+    <div class="mini" style="margin-top:10px">매달 그 날짜 0시가 되면 앱을 열 때 자동으로 출금 기록돼요. 말일보다 큰 날짜는 그 달 말일에 나가요.</div>
+    <div class="actions">
+      <button class="danger" id="fxDel">삭제</button>
+      <button class="primary" id="fxSave">저장</button>
+    </div>
+  </div>
+
+  <!-- 실제 잔액으로 맞추기 -->
+  <div class="sheet" id="adjustSheet">
+    <div class="grab"></div>
+    <h3 id="adjustTitle"></h3>
+    <div class="label" id="adjustNow"></div>
+    <div class="amount-wrap" id="adjustOne">
+      <input id="adjustAmount" class="amount-input num" inputmode="numeric" placeholder="0">
+      <span>원</span>
+    </div>
+    <!-- 비상금 구분 통장: 매달 비상금 / 현금 비상금을 따로 -->
+    <div id="adjustFund" hidden>
+      <div class="grid2" style="margin:16px 0 8px">
+        <div><label>매달 비상금</label><input id="adjMonthly" class="input num" inputmode="numeric" placeholder="0"></div>
+        <div><label>현금 비상금</label><input id="adjCash" class="input num" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <div class="mini" id="adjustPending"></div>
+    </div>
+    <div class="mini">통장 앱이나 지갑에 있는 실제 금액을 적어주세요. 내역에는 기록되지 않고 잔액만 바뀌어요.</div>
+    <div class="actions"><button class="primary" id="adjustSave">이 금액으로 맞추기</button></div>
+  </div>
+
+  <!-- 분석: 이 달 어디에 제일 많이 썼는지 -->
+  <div class="sheet" id="analysisSheet">
+    <div class="grab"></div>
+    <h3>📊 분석</h3>
+    <div class="month-nav">
+      <button class="icon-btn" id="anPrev">‹</button>
+      <h3 id="anMonth" class="num"></h3>
+      <button class="icon-btn" id="anNext">›</button>
+    </div>
+    <div id="chart" hidden></div>
+    <div class="empty" id="anEmpty" hidden>이 달 지출 기록이 없어요.</div>
+  </div>
+
+  <!-- ⋯ 메뉴 -->
+  <div class="sheet" id="menuSheet">
+    <div class="grab"></div>
+    <button class="menu-item" id="analysisBtn">📊 분석하기<small>이 달 어디에 제일 많이 썼는지 그래프와 표로 보기</small></button>
+    <button class="menu-item" id="settingsBtn">⚙️ 설정하기<small>통장 · 월급 · 생활비 입금 · 고정지출 · 적금 · 홈 화면 · 분류 · 잔액 · 백업</small></button>
+  </div>
+
+  <input type="file" id="fileInput" accept="application/json,.json" hidden>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="history.js"></script>
+  <script src="config.js"></script>
+  <script src="legacy.js"></script>
+  <script src="data.js"></script>
+  <script src="chart.js"></script>
+  <script src="app.js"></script>
+  <script src="form.js"></script>
+  <script src="fixed.js"></script>
+  <script src="setup-steps.js"></script>
+  <script src="setup.js"></script>
+  <script src="sheets.js"></script>
+</body>
+</html>

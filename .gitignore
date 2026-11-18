@@ -1,0 +1,6 @@
+# 개인 기록·잔액이 들어 있는 파일 (절대 올리지 않음)
+private/
+*.xlsx
+*.py
+.DS_Store
+.claude/
