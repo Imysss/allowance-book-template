@@ -184,12 +184,33 @@ function renderSavings() {
 }
 
 // ===== 공통 =====
-function openSheet(el) { $('#dim').classList.add('on'); el.classList.add('on'); }
+function openSheet(el) { $('#dim').classList.add('on'); el.classList.add('on'); syncBack(); }
 function closeSheets() {
   $('#dim').classList.remove('on');
   document.querySelectorAll('.sheet').forEach(s => s.classList.remove('on'));
   document.activeElement?.blur();
+  syncBack();
 }
+
+// ----- 안드로이드 뒤로가기: 팝업(시트)·설정 창이 열려 있으면 그것만 닫고, 없으면 앱이 꺼져요 -----
+// 열린 게 있으면 기록(history)에 한 칸을 넣어 두고, 뒤로가기가 그 칸을 쓰면서 팝업을 닫아요.
+let backArmed = false, backSkip = false, backTimer = 0;
+const layerOpen = () => !!document.querySelector('.sheet.on') || (typeof D !== 'undefined' && D?.mode === 'settings');
+function syncBack() {
+  // 닫고 바로 다른 걸 여는 경우(시트 → 설정 등)가 있어서 한 박자 뒤에 맞춰요
+  clearTimeout(backTimer);
+  backTimer = setTimeout(() => {
+    if (layerOpen() && !backArmed) { history.pushState({ layer: 1 }, ''); backArmed = true; }
+    else if (!layerOpen() && backArmed) { backArmed = false; backSkip = true; history.back(); }
+  }, 0);
+}
+window.addEventListener('popstate', () => {
+  backArmed = false;
+  if (backSkip) { backSkip = false; return; } // ✕·저장으로 닫아서 넣어 둔 칸을 치운 것
+  if (document.querySelector('.sheet.on')) closeSheets();
+  else if (typeof D !== 'undefined' && D?.mode === 'settings') $('#setupClose').click();
+  syncBack(); // 닫기를 취소했으면 칸을 다시 넣어요
+});
 function persist() { if (!store.save()) toast('저장에 실패했어요'); }
 let toastTimer;
 function toast(msg) {

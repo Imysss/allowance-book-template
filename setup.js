@@ -41,11 +41,13 @@ function openSetup(mode) {
   $('#setup').hidden = false; $('#app').hidden = true;
   document.body.classList.add('in-setup');
   drawSetup();
+  syncBack();
 }
 function closeSetup() {
   $('#setup').hidden = true; $('#app').hidden = false;
   document.body.classList.remove('in-setup');
   D = null;
+  syncBack();
 }
 // 바뀐 게 있는지 비교용 (catSide 같은 화면 상태는 제외)
 const draftKey = () => JSON.stringify([D.cfg, D.base, D.baseEmergency, D.bonusExpect, D.catRows]);
